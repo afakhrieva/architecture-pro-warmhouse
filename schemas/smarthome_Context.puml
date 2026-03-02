@@ -1,0 +1,26 @@
+@startuml
+title Диаграмма Умный дом
+
+top to bottom direction
+
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
+
+Person(user, "Пользователь", "Пользователь системы Умный дом")
+
+Boundary(SmartHome, "Система Умный дом") {
+    System(SmartHomeService, "Умный дом", "Система управление устройствами и сценариями умного дома")
+    SystemDb(SmartHomeDB, "БД")
+}
+
+System_Ext(Home_1, "Дом 1", "Система отопления")
+System_Ext(Home_2, "Дом 2", "Система отопления")
+System_Ext(Home_N, "Дом N", "Система отопления")
+
+Rel_D(user, SmartHomeService, "Использует систему")
+Rel_R(SmartHomeService, SmartHomeDB, "Сохраняет/запрашивает данные")
+
+BiRel(SmartHomeService, Home_1, " ")
+BiRel(SmartHomeService, Home_2, "управляет датчиками")
+BiRel(SmartHomeService, Home_N, "датчики при включении регистрируются")
+
+@enduml
