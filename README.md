@@ -89,7 +89,8 @@
 
 **Диаграмма компонентов (Components)**
 
-Добавьте диаграмму для каждого из выделенных микросервисов.
+1. **API Gateway** [Диаграмма компонентов API Gateway](schemas/с4/smarthome_api_gateway_Components.puml)
+![Диаграмма компонентов API Gateway](schemas/с4/images/smarthome_api_gateway_Components-__API_Gateway.png)
 
 **Диаграмма кода (Code)**
 

@@ -4,12 +4,19 @@ title Диаграмма контейнеров Умный дом
 
 top to bottom direction
 
-!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
+!include <C4/C4_Component>
+!include <C4/C4_Context>
+!include <C4/C4_Container>
 
-Person(user, "Пользователь", "Пользователь системы Умный дом")
+Person(user, "Клиент", "Мобильное приложение")
+
+System_Ext(EmailService, "Email Service")
+System_Ext(PushService, "Push Notification Service")
+
+System_Ext(Device1, "Device 1", "", "")
+System_Ext(Device2, "Device 2", "", "")
 
 System_Boundary(SmartHome, "Система Умный дом") {
-    Container(MobileApp, "Мобильное приложение")
     Container(ApiGateway, "API Gateway", "", "Точка входа, авторизация JWT", )
 
     Container(AuthService, "Authentication Service", "", "Проверка credentials, генерация JWT, сохранение refresh")
@@ -32,43 +39,36 @@ System_Boundary(SmartHome, "Система Умный дом") {
     ComponentQueue(EventBus, "Внутренняя шина событий", "Kafka/RabbitMQ", "События умного дома, пример - TemperatureExceeded, DeviceTurnedOn и т.п.")
 
     System(MQTT, "MQTT Broker", "Шлюз устройств")
+
+    Rel(user, ApiGateway, " ", "HTTPS/WebSocket")
+
+    Rel(ApiGateway, AuthService, "register/login", "REST/HTTP")
+    Rel(AuthService, AuthDB, " ")
+
+    Rel(ApiGateway, UserService, "get/update profile", "REST/HTTP")
+    Rel(UserService, UsersDB, " ")
+
+    Rel(ApiGateway, DeviceService, "add/get/update device", "REST/HTTP")
+    Rel(DeviceService, DeviceDB, " ")
+
+    Rel(ApiGateway, TelemetryService, "get telemetry data", "REST/HTTP")
+    Rel(TelemetryService, TelemetryDB, " ")
+
+    Rel(ApiGateway, AutomationService, "add/get/update scenarios, apply actions", "REST/HTTP")
+    Rel(AutomationService, AutomationDB, " ")
+    Rel(AutomationService, DeviceService, "send commands to devices", "REST/HTTP")
+
+    Rel(DeviceService, EventBus, "send events")
+    Rel(EventBus, TelemetryService, "listen events topic")
+    Rel(EventBus, AutomationService, "listen events topic")
+    Rel(EventBus, NotificationService, "listen events topic")
+
+    Rel(NotificationService, EmailService, " ")
+    Rel(NotificationService, PushService, " ")
+
+    BiRel(DeviceService, MQTT, " ")
 }
 
-System_Ext(EmailService, "Email Service")
-System_Ext(PushService, "Push Notification Service")
-
-System_Ext(Device1, "Device 1", "", "")
-System_Ext(Device2, "Device 2", "", "")
-
-
-Rel(user, MobileApp, " ")
-Rel(MobileApp, ApiGateway, " ", "HTTPS/WebSocket")
-
-Rel(ApiGateway, AuthService, "register/login", "REST/HTTP")
-Rel(AuthService, AuthDB, " ")
-
-Rel(ApiGateway, UserService, "get/update profile", "REST/HTTP")
-Rel(UserService, UsersDB, " ")
-
-Rel(ApiGateway, DeviceService, "add/get/update device", "REST/HTTP")
-Rel(DeviceService, DeviceDB, " ")
-
-Rel(ApiGateway, TelemetryService, "get telemetry data", "REST/HTTP")
-Rel(TelemetryService, TelemetryDB, " ")
-
-Rel(ApiGateway, AutomationService, "add/get/update scenarios, apply actions", "REST/HTTP")
-Rel(AutomationService, AutomationDB, " ")
-Rel(AutomationService, DeviceService, "send commands to devices", "REST/HTTP")
-
-Rel(DeviceService, EventBus, "send events")
-Rel(EventBus, TelemetryService, "listen events topic")
-Rel(EventBus, AutomationService, "listen events topic")
-Rel(EventBus, NotificationService, "listen events topic")
-
-Rel(NotificationService, EmailService, " ")
-Rel(NotificationService, PushService, " ")
-
-BiRel(DeviceService, MQTT, " ")
 Rel(MQTT, Device1, " ")
 Rel(MQTT, Device2, " ")
 

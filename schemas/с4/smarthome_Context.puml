@@ -3,7 +3,8 @@ title Диаграмма контекста Умный дом
 
 top to bottom direction
 
-!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
+!include <C4/C4_Context>
+!include <C4/C4_Container>
 
 Person(user, "Пользователь", "Пользователь системы Умный дом")
 
