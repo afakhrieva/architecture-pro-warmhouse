@@ -1,0 +1,49 @@
+@startuml
+
+title Диаграмма компонентов Authentication Service
+
+top to bottom direction
+
+!include <C4/C4_Component>
+!include <C4/C4_Context>
+!include <C4/C4_Container>
+
+Person(client, "Клиент", "Мобильное приложение")
+
+System_Ext(ApiGateway, "API Gateway", "Проксирует запросы и проверяет токены")
+
+Container_Boundary(auth_service, "Auth Service") {
+
+    Component(RestApi, "REST API контроллер", "HTTP Handlers", "Обрабатывает входящие HTTP запросы: /register, /login, /validate, /refresh")
+
+    Component(AuthLogic, "Auth Logic Layer", "Сервисный слой", "Содержит бизнес-логику аутентификации и регистрации")
+
+    Component(JWTService, "JWT Service", "Компонент", "Генерирует и валидирует JWT токены (access и refresh)")
+
+    Component(PasswordHasher, "Password Hasher", "Утилита", "Хеширует пароли (bcrypt/scrypt) и проверяет их")
+
+    Component(UserRepository, "UserRepository", "DAO слой", "Работа с БД: CRUD операции для пользователей")
+
+    Component(TokenRepository, "Token Repository", "DAO слой", "Работа с БД: хранение refresh токенов (если нужно)")
+
+    Component(Validator, "Валидатор", "Компонент", "Проверяет корректность входных данных (email, пароль)")
+
+    ComponentDb(AuthDB, "Auth DB", "Хранит пользователей и хеши паролей", "postgres")
+
+    Rel(RestApi, Validator, "1. Валидирует входные данные", "вызов")
+    Rel(RestApi, AuthLogic, "2. Передает данные для обработки", "вызов")
+
+    Rel(AuthLogic, PasswordHasher, "3. Хеширует/проверяет пароль", "вызов")
+    Rel(AuthLogic, JWTService, "4. Генерирует токены", "вызов")
+    Rel(AuthLogic, UserRepository, "5. Ищет/сохраняет пользователя", "вызов")
+    Rel(AuthLogic, TokenRepository, "6. Сохраняет refresh токен", "вызов")
+
+    Rel(UserRepository, AuthDB, "7. SQL запросы", "SELECT/INSERT/UPDATE")
+    Rel(TokenRepository, AuthDB, "8. SQL запросы", "SELECT/INSERT/DELETE")
+}
+
+' Связи с внешним миром
+Rel(client, ApiGateway, "1. /login, /register", "HTTPS")
+Rel(ApiGateway, RestApi, "2. Проксирует запрос", "HTTP")
+
+@enduml
