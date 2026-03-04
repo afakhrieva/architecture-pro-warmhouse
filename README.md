@@ -93,7 +93,8 @@
 ![Диаграмма компонентов API Gateway](schemas/с4/images/smarthome_api_gateway_Components-__API_Gateway.png)
 2. **Authentication Service** [Диаграмма компонентов Authentication Service](schemas/с4/smarthome_auth_service_Components.puml)
 ![Диаграмма компонентов Authentication Service](schemas/с4/images/smarthome_auth_service_Components-__Authentication_Service.png)
-3. **User Management Service**
+3. **User Management Service** [Диаграмма компонентов User Management Service](schemas/с4/smarthome_user_service_Components.puml)
+   ![Диаграмма компонентов User Management Service](schemas/с4/images/smarthome_user_service_Components-__User_Management_Service.png)
 4. **Device Service**
 5. **Telemetry Service**
 6. **Automation Service**

@@ -37,6 +37,22 @@ services:
     networks:
       - smarthome-network
 
+  user-service:
+    build:
+      context: ./user-service
+      dockerfile: Dockerfile
+    container_name: user-service
+    ports:
+      - "8001:8001"
+    environment:
+      - ENVIRONMENT=development
+      - DEBUG=true
+      - SERVICE_NAME=user-service
+      - PORT=8001
+    restart: unless-stopped
+    networks:
+      - smarthome-network
+
 volumes:
   postgres-data:
 
