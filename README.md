@@ -77,28 +77,41 @@
 
 ### 5. Визуализация контекста системы — диаграмма С4
 
-[Диаграмма контекста Умного дома](schemas/с4/smarthome_Context.puml)
-![Диаграмма контекста Умного дома](schemas/с4/images/smarthome_Context-___.png)
+[Диаграмма контекста Умного дома](с4/smarthome_Context.puml)
+![Диаграмма контекста Умного дома](с4/images/smarthome_Context-___.png)
 
 # Задание 2. Проектирование микросервисной архитектуры
 
 **Диаграмма контейнеров (Containers)**
 
-[Диаграмма контейнеров Умного дома](schemas/с4/smarthome_Conteiners.puml)
-![Диаграмма контейнеров Умного дома](schemas/с4/images/smarthome_Conteiners-___.png)
+[Диаграмма контейнеров Умного дома](с4/smarthome_Conteiners.puml)
+![Диаграмма контейнеров Умного дома](с4/images/smarthome_Conteiners-___.png)
+
+Пояснения:
+1. DeviceService - единственная точка входа от устройств через Шлюз устройств (mttq broker). Читает события из mttq, обрабатывает, при необходимости обогащает данными и транслирует в топики Внутренней шины событий. Также содержит минимальную CRUD логику для сущности `Device` и пишет соответсвующие события в отдельный топик.
+2. Device Service читает телеметрию из mttq broker обрабатывает, обогащает внутренними данными (device_id, home_id, location_id) и транслирует в отдельный топик Внутренней шины событий, который в свою очередь читает Telemetry Service и сохраняет в своем хранилище данных.
+3. Device Service в идеале не содержит бизнес логики, а отвечает только за общение с устройствами.
+4. Все core микросервисы (User Management Service, Device Service, Automation Service) пишут свои события во Внутреннюю шину событий, и другие сервисы читают при необходимости эти топики. Это нужно для согласованности данных в конечном счете. Синхронные вызовы между сервисами для этих целей менее предпочтительны. На схеме это не отражается(только Device Service как писатель основных данных), т.к. с автоматической расстановкой компонентов она выглядит нечитаемо.
 
 **Диаграмма компонентов (Components)**
 
-1. **API Gateway** [Диаграмма компонентов API Gateway](schemas/с4/smarthome_api_gateway_Components.puml)
-![Диаграмма компонентов API Gateway](schemas/с4/images/smarthome_api_gateway_Components-__API_Gateway.png)
-2. **Authentication Service** [Диаграмма компонентов Authentication Service](schemas/с4/smarthome_auth_service_Components.puml)
-![Диаграмма компонентов Authentication Service](schemas/с4/images/smarthome_auth_service_Components-__Authentication_Service.png)
-3. **User Management Service** [Диаграмма компонентов User Management Service](schemas/с4/smarthome_user_service_Components.puml)
-   ![Диаграмма компонентов User Management Service](schemas/с4/images/smarthome_user_service_Components-__User_Management_Service.png)
-4. **Device Service**
-5. **Telemetry Service**
-6. **Automation Service**
-7. **Notification Service**
+1. **API Gateway** - единая точка входа для пользователей. REST over HTTPs. Обрабатывает и маршрутизирует запросы пользователя в нужный микросервис, при необходимости делает трансформацию ответа микросервиса или агрегирует ответы нескольких сервисов. Также может лимитировать запросы, генерировать request id для трассировки запросов и т.п. \
+[Диаграмма компонентов API Gateway](с4/smarthome_api_gateway_Components.puml)
+![Диаграмма компонентов API Gateway](с4/images/smarthome_api_gateway_Components-__API_Gateway.png)
+2. **Authentication Service** - сервис авторизации. Предоставляет REST Api для регистрации и логина пользователей, валидации и обновлении авторизационных токенов. \
+[Диаграмма компонентов Authentication Service](с4/smarthome_auth_service_Components.puml)
+![Диаграмма компонентов Authentication Service](с4/images/smarthome_auth_service_Components-__Authentication_Service.png)
+3. **User Management Service** - микросервис, отвечающий за управление профилем пользователей, домами и помещениями в домах. Предоставляет REST Api для CRUD операций с сущностями `User`, `Home`, `Location`. \
+[Диаграмма компонентов User Management Service](с4/smarthome_user_service_Components.puml)
+![Диаграмма компонентов User Management Service](с4/images/smarthome_user_service_Components-__User_Management_Service.png)
+4. **Device Service** - сервис отвечающий за взаимодействие с устройствами. \
+[Диаграмма компонентов Device Service](с4/smarthome_device_service_Components.puml)
+![Диаграмма компонентов Device Service](с4/images/smarthome_device_service_Components-__Device_Service.png)
+5. **Telemetry Service** - сервис для сбора и хранения телеметрии. \
+[Диаграмма компонентов Telemetry Service](с4/smarthome_telemetry_service_Components.puml)
+![Диаграмма компонентов Telemetry Service](с4/images/smarthome_telemetry_service_Components-__Telemetry_Service.png)
+6. **Automation Service** не проработан в этом задании, обозначен для реализации в будущем.
+7. **Notification Service** не проработан в этом задании, обозначен для реализации в будущем.
 
 **Диаграмма кода (Code)**
 
@@ -112,11 +125,66 @@
 
 ### 1. Тип API
 
-Укажите, какой тип API вы будете использовать для взаимодействия микросервисов. Объясните своё решение.
+Взаимодействие между микросервисами построено на двух ключевых принципах: 
+ - слабая связанность;
+ - согласованность в конечном счете. 
+Все коммуникации разделены на синхронные и асинхронные каналы.
+
+**Синхронное взаимодействие (Запрос-Ответ)**
+1. Клиент-сервис (внешний контур)
+   - *Участники*: Frontend (Web/Mobile) -> API Gateway -> Сервисы.
+   - *Протокол*: REST/HTTPS.
+   - *Формат данных*: JSON.
+   - *Описание*: Все внешние запросы проходят через единую точку входа. API Gateway маршрутизирует запросы, выполняет агрегацию данных (если требуется) и проверку JWT-токенов. REST используется из-за своей универсальности и поддержки всеми типами клиентов.
+
+2. Сервис-Сервис (внутренний контур для чтения данных) (_в задании такое взаимодействие не проработано и на схеме контейнеров его нет, но может понадобиться_)
+   - *Участники*: User Management Service -> Device Service, Automation Service -> Device Service, ...
+   - *Протокол*: gRPC.
+   - *Формат данных*: Protocol Buffers (Protobuf).
+   - *Описание*: Для высоконагруженных внутренних вызовов, где критична задержка (latency), используется gRPC. Наличие строгого контракта (.proto файлы) исключает неоднозначность в типах данных между сервисами, написанными на разных языках (Go и Python).
+   
+**Асинхронное взаимодействие (События)**
+1. События домена (Domain Events) через брокер сообщений
+   - *Участники*: Ядровые сервисы (User Management Service, Device Service, Automation Service, Telemetry Service) и брокер сообщений.
+   - *Технология*: Apache Kafka.
+   - *Формат данных*: Avro (схема в Schema Registry)
+   - *Топики* (логическая структура):
+     * `user.events` - User Management Service пишет в топик CRUD события пользователя, дома и помещений(пример `UserProfileUpdated`, `HomeCreated`, `LocationDeleted` и т.д.)
+     * `device.events` - Device Service пишет в топик CRUD события устройств (пример `DeviceCreated`, `DeviceUpdated` и т.п.)
+     * `device.states` - Device Service пишет в топик события изменения состояния устройств (будет читать сервис управления сценариями Automation Service, после чего будет слать необходимые команды в Device Service для исполнения)
+     * `device.telemetry` - Device Service из шлюза устройств принимает телеметрию, обрабатывает ее и транслирует обогащенные события в топик `telemetry.events`, который будет читать Telemetry Service и сохранять данные
 
 ### 2. Документация API
 
-Здесь приложите ссылки на документацию API для микросервисов, которые вы спроектировали в первой части проектной работы. Для документирования используйте Swagger/OpenAPI или AsyncAPI.
+1. API Gateway проксирует запросы от клиента, поэтому тут будет совокупность 
+
+2. Device Service REST Api
+
+```
+# BASIC CRUD
+POST   /api/devices                    # создать устройство
+GET    /api/devices                     # список устройств (с фильтрами)
+GET    /api/devices/{device_id}         # получить устройство
+PATCH  /api/devices/{device_id}         # обновить устройство
+DELETE /api/devices/{device_id}         # удалить устройство
+
+# STATE
+GET    /api/devices/{device_id}/state   # состояние
+
+# COMMANDS 
+POST   /api/devices/{device_id}/commands     # отправить команду
+POST   /api/devices/commands/batch           # массовые команды
+GET    /api/devices/commands/{command_id}    # статус команды
+```
+
+3. Telemetry Service
+
+```
+# TELEMETRY
+GET    /api/devices/{device_id}/telemetry          # история
+GET    /api/devices/{device_id}/telemetry/summary  # сводка
+```
+
 
 # Задание 5. Работа с docker и docker-compose
 

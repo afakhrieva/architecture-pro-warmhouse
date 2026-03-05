@@ -1,0 +1,66 @@
+@startuml
+
+title Диаграмма компонентов Device Service
+
+top to bottom direction
+
+!include <C4/C4_Component>
+!include <C4/C4_Context>
+!include <C4/C4_Container>
+
+Person(client, "Клиент", "Мобильное приложение")
+
+System_Ext(ApiGateway, "API Gateway", "Проксирует запросы и проверяет токены")
+SystemQueue_Ext(MQTT, "MQTT Broker", "mqtt", "Шлюз устройств")
+SystemQueue_Ext(EventBus, "Внутренняя шина событий", "kafka")
+
+Container_Boundary(device_service, "Device Service") {
+
+    Boundary(rest_api, "REST Api Controllers Layer"){
+        Component(DeviceApi, "Device API контроллер", "HTTP Handlers", "Обрабатывает CRUD запросы: /devices*")
+        Component(DeviceStateApi, "Device State API контроллер", "HTTP Handlers", "Обрабатывает запросы состояния устройства: /devices/*/state")
+        Component(CommandApi, "Command API контроллер", "HTTP Handlers", "Обрабатывает запросы отправки команд устройствам: /devices/*commands*")
+    }
+
+    Boundary(service, "Service Layer"){
+        Component(DeviceService, "Device CRUD Logic", "Сервисный слой", "Содержить CRUD логику для внутренней сущности Device")
+        Component(DeviceStateReader, "Device State Read/Save Logic", "Сервисный слой", "Содержит логику чтения из mqqt и сохранения состояния девайса(latest)")
+        Component(CommandService, "Send Command to device Logic", "Сервисный слой", "Содержит логику отправки команд устройствам")
+
+        Component(TelemetryService, "Telemetry read/write Logic", "Сервисный слой", "Содержить чтения/записи телеметрии")
+    }
+
+    Boundary(dao, "Dao Layer") {
+        Component(DeviceRepository, "Device Repository", "DAO слой")
+    }
+
+    ComponentDb(DeviceDB, "Device DB", "Postgres")
+    ComponentDb(DeviceStateDB, "Device State DB", "Redis")
+    ComponentDb(CommandsHistoryDB, "Commands History DB", "Redis")
+
+    Rel(DeviceApi, DeviceService, " ")
+    Rel(DeviceService, DeviceRepository, " ")
+    Rel(DeviceRepository, DeviceDB, " ")
+
+    Rel(DeviceStateApi, DeviceStateDB, " ")
+    Rel(DeviceStateReader, DeviceStateDB, "пишем device state latest")
+
+    Rel(CommandApi, CommandService, " ")
+    Rel(CommandService, CommandsHistoryDB, "пишем историю команд")
+}
+
+Rel(client, ApiGateway, "Запрос", "https")
+Rel(ApiGateway, DeviceApi, "/devices*", "http")
+Rel(ApiGateway, DeviceStateApi, "/devices/*/state", "http")
+Rel(ApiGateway, CommandApi, "/devices/*commands*", "http")
+
+Rel(MQTT, TelemetryService, "raw telemetry")
+Rel(MQTT, DeviceStateReader, "слушаем обновления состояния устройств")
+Rel(TelemetryService, EventBus, "topic=telemetry.events")
+
+Rel(CommandService, MQTT, "шлем команды устройствам")
+
+Rel(DeviceService, EventBus, "topic=device.events")
+
+@enduml
+

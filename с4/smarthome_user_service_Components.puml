@@ -11,8 +11,9 @@ top to bottom direction
 Person(client, "Клиент", "Мобильное приложение")
 
 System_Ext(ApiGateway, "API Gateway", "Проксирует запросы и проверяет токены")
+SystemQueue_Ext(EventBus, "Внутренняя шина событий", "kafka")
 
-Container_Boundary(auth_service, "User Management Service") {
+Container_Boundary(user_service, "User Management Service") {
 
     Boundary(rest_api, "REST Api Controllers Layer"){
          Component(UsersApi, "Users API контроллер", "HTTP Handlers", "Обрабатывает входящие HTTP запросы: /users*")
@@ -37,18 +38,12 @@ Container_Boundary(auth_service, "User Management Service") {
     Rel(rest_api, service, " ")
     Rel(service, dao, " ")
 
-'    Rel(UsersApi, UsersLogic, " ", "вызов")
-'    Rel(HomesApi, HomesLogic, " ", "вызов")
-'    Rel(LocationsApi, LocationsLogic, " ", "вызов")
-
-'    Rel(UsersLogic, UsersRepository, " ")
-'    Rel(HomesLogic, HomesRepository, " ")
-'    Rel(LocationsLogic, LocationsRepository, " ")
-
     Rel(UsersRepository, UserHomesDB, "SQL запросы", "SELECT/INSERT/UPDATE")
     Rel(HomesRepository, UserHomesDB, "SQL запросы", "SELECT/INSERT/DELETE")
     Rel(LocationsRepository, UserHomesDB, "SQL запросы", "SELECT/INSERT/DELETE")
 }
+
+Rel(service, EventBus, "шлем CRUD события")
 
 ' Связи с внешним миром
 Rel(client, ApiGateway, "Запрос", "https")
