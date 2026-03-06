@@ -104,4 +104,6 @@ users ||--o{ devices : owns
 
 ' Device Service -> Telemetry Service
 devices ||--o{ telemetry : produces
+
+' ========== Это коммент для коммита ==========
 @enduml
