@@ -61,10 +61,10 @@ jobs:
           git add diagrams/**/*.png
           git add diagrams/*.png
 
-          if [ -n "${{ github.head_ref }}" ]; then
-            BRANCH="${{ github.head_ref }}"
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            TARGET_BRANCH="${{ github.head_ref }}"
           else
-            BRANCH="${{ github.ref_name }}"
+            TARGET_BRANCH="${{ github.ref_name }}"
           fi
 
           if git diff --staged --quiet; then
@@ -72,6 +72,6 @@ jobs:
               exit 0
             else
               git commit -m "Automated diagram generation"
-              git push origin HEAD:$TARGET_BRANCH
+              git push origin HEAD:TARGET_BRANCH
             fi
         if: success()
