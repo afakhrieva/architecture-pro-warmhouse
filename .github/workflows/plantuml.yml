@@ -56,7 +56,20 @@ jobs:
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
+
           git add diagrams/**/*.png
-          git commit -m "Automated diagram generation"
-          git push origin warmhouse
+
+          if [ -n "${{ github.head_ref }}" ]; then
+            BRANCH="${{ github.head_ref }}"
+          else
+            BRANCH="${{ github.ref_name }}"
+          fi
+
+          if git diff --staged --quiet; then
+              echo "No changes to commit"
+              exit 0
+            else
+              git commit -m "Automated diagram generation"
+              git push origin HEAD:$TARGET_BRANCH
+            fi
         if: success()
