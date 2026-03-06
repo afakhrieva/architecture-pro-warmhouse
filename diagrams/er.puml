@@ -1,0 +1,107 @@
+@startuml
+skinparam linetype ortho
+skinparam roundcorner 10
+skinparam class {
+    BackgroundColor White
+    BorderColor Black
+    ArrowColor Black
+}
+
+' ========== User Service ==========
+package "User Service" {
+  entity "users" as users {
+    + id: UUID [PK]
+    --
+    email: VARCHAR(255) [UNIQUE]
+    name: VARCHAR(100)
+    avatar_url: TEXT
+    language: VARCHAR(10)
+    created_at: TIMESTAMP
+    updated_at: TIMESTAMP
+  }
+
+  entity "homes" as homes {
+    + id: SERIAL [PK]
+    + uuid: UUID [UNIQUE]
+    --
+    owner_id: UUID [FK -> users.id]
+    name: VARCHAR(100)
+    address: TEXT
+    timezone: VARCHAR(50)
+    created_at: TIMESTAMP
+    updated_at: TIMESTAMP
+  }
+
+  entity "locations" as locations {
+    + id: SERIAL [PK]
+    + uuid: UUID [UNIQUE]
+    --
+    home_id: INTEGER [FK -> homes.id]
+    name: VARCHAR(100)
+    icon: VARCHAR(50)
+    floor: INTEGER
+    created_at: TIMESTAMP
+    updated_at: TIMESTAMP
+  }
+
+  users ||--o{ homes : owns
+  homes ||--o{ locations : contains
+}
+
+' ========== Device Service ==========
+package "Device Service" {
+  entity "devices" as devices {
+    + id: UUID [PK]
+    --
+    ext_id: VARCHAR(255) [UNIQUE]
+    name: VARCHAR(100)
+    home_id: INTEGER [FK -> homes.id]
+    location_id: INTEGER [FK -> locations.id] [NULL]
+    user_id: UUID [FK -> users.id]
+    device_type: VARCHAR(50)
+    status: VARCHAR(20)
+    last_seen: TIMESTAMP
+    created_at: TIMESTAMP
+    updated_at: TIMESTAMP
+  }
+
+  entity "commands" as commands {
+    + id: UUID [PK]
+    --
+    device_id: UUID [FK -> devices.id]
+    user_id: UUID [FK -> users.id]
+    type: VARCHAR(50)
+    params: JSONB
+    status: VARCHAR(20)
+    created_at: TIMESTAMP
+    executed_at: TIMESTAMP [NULL]
+    error: TEXT [NULL]
+  }
+
+  devices ||--o{ commands : receives
+}
+
+' ========== Telemetry Service ==========
+package "Telemetry Service" {
+  entity "telemetry" as telemetry {
+    + time: TIMESTAMPTZ
+    + device_id: UUID
+    + metric: VARCHAR(50)
+    + value: DOUBLE PRECISION
+    + unit: VARCHAR(20)
+    + tags: JSONB
+    --
+    INDEX (device_id, time DESC)
+    INDEX (metric, time)
+  }
+}
+
+' ========== Связи между сервисами ==========
+' User Service -> Device Service
+homes ||--o{ devices : contains
+locations ||--o{ devices : located_in
+users ||--o{ devices : owns
+
+' Device Service -> Telemetry Service
+devices ||--o{ telemetry : produces
+@enduml

@@ -51,6 +51,7 @@ jobs:
           java -jar plantuml.jar -charset UTF-8 diagrams/container/*.puml
           java -jar plantuml.jar -charset UTF-8 diagrams/component/*.puml
           java -jar plantuml.jar -charset UTF-8 diagrams/code/*.puml
+          java -jar plantuml.jar -charset UTF-8 diagrams/*.puml
 
       - name: Commit Diagrams
         run: |
@@ -58,6 +59,7 @@ jobs:
           git config --local user.name "github-actions[bot]"
 
           git add diagrams/**/*.png
+          git add diagrams/*.png
 
           if [ -n "${{ github.head_ref }}" ]; then
             BRANCH="${{ github.head_ref }}"

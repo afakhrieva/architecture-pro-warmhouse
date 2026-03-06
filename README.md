@@ -115,11 +115,14 @@
 
 **Диаграмма кода (Code)**
 
-Добавьте одну диаграмму или несколько.
+**Telemetry Service**
+[Диаграмма кода Telemetry Service](diagrams/code/telemetry_service.puml)
+![Диаграмма кода Telemetry Service](diagrams/code/telemetry_service.png)
 
 # Задание 3. Разработка ER-диаграммы
 
-Добавьте сюда ER-диаграмму. Она должна отражать ключевые сущности системы, их атрибуты и тип связей между ними.
+[ER-Диаграмма](diagrams/er.puml)
+![ER-Диаграмма](diagrams/er.png)
 
 # Задание 4. Создание и документирование API
 
