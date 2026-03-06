@@ -11,24 +11,25 @@ top to bottom direction
 Person(client, "Клиент", "Мобильное приложение")
 
 System_Ext(ApiGateway, "API Gateway", "Проксирует запросы и проверяет токены")
+SystemDb_Ext(AuthDB, "Auth DB", "Хранит пользователей и хеши паролей", "postgres")
 
 Container_Boundary(auth_service, "Auth Service") {
 
-    Component(RestApi, "REST API контроллер", "HTTP Handlers", "Обрабатывает входящие HTTP запросы: /register, /login, /validate, /refresh")
+    Boundary(api, "REST Api Controllers Layer"){
+        Component(RestApi, "REST API контроллер", "HTTP Handlers", "Обрабатывает входящие HTTP запросы: /register, /login, /validate, /refresh")
+    }
 
-    Component(AuthLogic, "Auth Logic Layer", "Сервисный слой", "Содержит бизнес-логику аутентификации и регистрации")
+    Boundary(Service, "Service Layer") {
+        Component(AuthLogic, "Auth Logic Layer", "Сервисный слой", "Содержит бизнес-логику аутентификации и регистрации")
+        Component(JWTService, "JWT Service", "Компонент", "Генерирует и валидирует JWT токены (access и refresh)")
+        Component(PasswordHasher, "Password Hasher", "Утилита", "Хеширует пароли (bcrypt/scrypt) и проверяет их")
+            Component(Validator, "Валидатор", "Компонент", "Проверяет корректность входных данных (email, пароль)")
+    }
 
-    Component(JWTService, "JWT Service", "Компонент", "Генерирует и валидирует JWT токены (access и refresh)")
-
-    Component(PasswordHasher, "Password Hasher", "Утилита", "Хеширует пароли (bcrypt/scrypt) и проверяет их")
-
-    Component(UserRepository, "UserRepository", "DAO слой", "Работа с БД: CRUD операции для пользователей")
-
-    Component(TokenRepository, "Token Repository", "DAO слой", "Работа с БД: хранение refresh токенов (если нужно)")
-
-    Component(Validator, "Валидатор", "Компонент", "Проверяет корректность входных данных (email, пароль)")
-
-    ComponentDb(AuthDB, "Auth DB", "Хранит пользователей и хеши паролей", "postgres")
+    Boundary(Dao, "Dao Layer") {
+        Component(UserRepository, "UserRepository", "DAO слой", "Работа с БД: CRUD операции для пользователей")
+        Component(TokenRepository, "Token Repository", "DAO слой", "Работа с БД: хранение refresh токенов)")
+    }
 
     Rel(RestApi, Validator, "1. Валидирует входные данные", "вызов")
     Rel(RestApi, AuthLogic, "2. Передает данные для обработки", "вызов")

@@ -96,20 +96,20 @@
 **Диаграмма компонентов (Components)**
 
 1. **API Gateway** - единая точка входа для пользователей. REST over HTTPs. Обрабатывает и маршрутизирует запросы пользователя в нужный микросервис, при необходимости делает трансформацию ответа микросервиса или агрегирует ответы нескольких сервисов. Также может лимитировать запросы, генерировать request id для трассировки запросов и т.п. \
-[Диаграмма компонентов API Gateway](diagrams/component/smarthome_api_gateway_Components.puml)
+[Диаграмма компонентов API Gateway](diagrams/component/api_gateway.puml)
 ![Диаграмма компонентов API Gateway](diagrams/images/smarthome_api_gateway_Components-__API_Gateway.png)
 2. **Authentication Service** - сервис авторизации. Предоставляет REST Api для регистрации и логина пользователей, валидации и обновлении авторизационных токенов. \
 [Диаграмма компонентов Authentication Service](diagrams/component/auth_service.puml)
 ![Диаграмма компонентов Authentication Service](diagrams/images/smarthome_auth_service_Components-__Authentication_Service.png)
 3. **User Management Service** - микросервис, отвечающий за управление профилем пользователей, домами и помещениями в домах. Предоставляет REST Api для CRUD операций с сущностями `User`, `Home`, `Location`. \
-[Диаграмма компонентов User Management Service](diagrams/component/smarthome_user_service_Components.puml)
+[Диаграмма компонентов User Management Service](diagrams/component/user_service.puml)
 ![Диаграмма компонентов User Management Service](diagrams/images/smarthome_user_service_Components-__User_Management_Service.png)
 4. **Device Service** - сервис отвечающий за взаимодействие с устройствами. \
 [Диаграмма компонентов Device Service](diagrams/component/device_service.puml)
-![Диаграмма компонентов Device Service](diagrams/images/smarthome_device_service_Components-__Device_Service.png)
+![Диаграмма компонентов Device Service](diagrams/images/device_service-__Device_Service.png)
 5. **Telemetry Service** - сервис для сбора и хранения телеметрии. \
 [Диаграмма компонентов Telemetry Service](diagrams/component/telemetry_service.puml)
-![Диаграмма компонентов Telemetry Service](diagrams/images/smarthome_telemetry_service_Components-__Telemetry_Service.png)
+![Диаграмма компонентов Telemetry Service](diagrams/images/telemetry_service-__Telemetry_Service.png)
 6. **Automation Service** не проработан в этом задании, обозначен для реализации в будущем.
 7. **Notification Service** не проработан в этом задании, обозначен для реализации в будущем.
 

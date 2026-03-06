@@ -11,19 +11,31 @@ top to bottom direction
 Person(client, "Клиент", "Мобильное приложение")
 System_Ext(ApiGateway, "API Gateway", "Проксирует запросы и проверяет токены")
 SystemQueue_Ext(EventBus, "Внутренняя шина событий", "kafka")
+SystemDb_Ext(RedisDb, "Redis", "Sorted Sets")
 
 Container_Boundary(telemetry_service, "Telemetry Service") {
-    Component(TelemetryApi, "Telemetry API контроллер", "HTTP Handlers", "Обрабатывает запросы телеметрии от пользователя")
-    Component(TelemetryConsumer, "Telemetry Consume and Store Logic", "Сервисный слой", "Читает топик с телеметрией, сохраняет в хранилище")
-    ComponentDb(TelemetryStore, "Telemetry Store", "Redis")
+    Boundary(restApi, "REST Api Controllers Layer"){
+        Component(TelemetryApi, "Telemetry API контроллер", "HTTP Handlers", "Обработка запросов телеметрии от пользователя")
+    }
 
-    Rel(TelemetryConsumer, TelemetryStore, " ")
-    Rel(TelemetryApi, TelemetryStore, " ")
+    Boundary(kafka, "Kafka Layer") {
+        Component(TelemetryConsumer, "TelemetryConsumer", "", "Подключение к Kafka\nЧтение сообщений\nОбработка батчей\nRetry логика")
+    }
+
+    Boundary(storage, "Storage Layer") {
+            Component(TelemetryStore, "TelemetryStore", "", "Подключение к Redis\nСохранение точек\nЧтение истории\nПоследние значения")
+            Component(RedisClient, "Redis Client", "", "ZADD / ZRANGE\nZREVRANGE\nPipeline операции")
+    }
+
+    Rel(EventBus, TelemetryConsumer, "consumes", "topic=device.telemetry")
+    Rel(TelemetryConsumer, TelemetryStore, "save_batch()", "telemetry points")
+    Rel(TelemetryStore, RedisClient, "uses")
+    Rel(RedisClient, RedisDb, "Redis protocol")
+
+    Rel(TelemetryApi, TelemetryStore, "get_history() / get_latest()")
 }
 
 Rel(client, ApiGateway, "Запрос", "https")
 Rel(ApiGateway, TelemetryApi, "/telemetry*", "http")
-
-Rel(EventBus, TelemetryConsumer, "topic=device.telemetry")
 
 @enduml
