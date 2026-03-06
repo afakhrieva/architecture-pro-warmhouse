@@ -78,14 +78,14 @@
 ### 5. Визуализация контекста системы — диаграмма С4
 
 [Диаграмма контекста Умного дома](diagrams/context/smarthome.puml)
-![Диаграмма контекста Умного дома](diagrams/images/smarthome_Context-___.png)
+![Диаграмма контекста Умного дома](diagrams/context/smarthome.png)
 
 # Задание 2. Проектирование микросервисной архитектуры
 
 **Диаграмма контейнеров (Containers)**
 
 [Диаграмма контейнеров Умного дома](diagrams/container/smarthome.puml)
-![Диаграмма контейнеров Умного дома](diagrams/images/smarthome_Conteiners-___.png)
+![Диаграмма контейнеров Умного дома](diagrams/container/smarthome.png)
 
 Пояснения:
 1. DeviceService - единственная точка входа от устройств через Шлюз устройств (mttq broker). Читает события из mttq, обрабатывает, при необходимости обогащает данными и транслирует в топики Внутренней шины событий. Также содержит минимальную CRUD логику для сущности `Device` и пишет соответсвующие события в отдельный топик.
@@ -97,19 +97,19 @@
 
 1. **API Gateway** - единая точка входа для пользователей. REST over HTTPs. Обрабатывает и маршрутизирует запросы пользователя в нужный микросервис, при необходимости делает трансформацию ответа микросервиса или агрегирует ответы нескольких сервисов. Также может лимитировать запросы, генерировать request id для трассировки запросов и т.п. \
 [Диаграмма компонентов API Gateway](diagrams/component/api_gateway.puml)
-![Диаграмма компонентов API Gateway](diagrams/images/smarthome_api_gateway_Components-__API_Gateway.png)
+![Диаграмма компонентов API Gateway](diagrams/component/api_gateway.png)
 2. **Authentication Service** - сервис авторизации. Предоставляет REST Api для регистрации и логина пользователей, валидации и обновлении авторизационных токенов. \
 [Диаграмма компонентов Authentication Service](diagrams/component/auth_service.puml)
-![Диаграмма компонентов Authentication Service](diagrams/images/smarthome_auth_service_Components-__Authentication_Service.png)
+![Диаграмма компонентов Authentication Service](diagrams/component/auth_service.png)
 3. **User Management Service** - микросервис, отвечающий за управление профилем пользователей, домами и помещениями в домах. Предоставляет REST Api для CRUD операций с сущностями `User`, `Home`, `Location`. \
 [Диаграмма компонентов User Management Service](diagrams/component/user_service.puml)
-![Диаграмма компонентов User Management Service](diagrams/images/smarthome_user_service_Components-__User_Management_Service.png)
+![Диаграмма компонентов User Management Service](diagrams/component/user_service.png)
 4. **Device Service** - сервис отвечающий за взаимодействие с устройствами. \
 [Диаграмма компонентов Device Service](diagrams/component/device_service.puml)
-![Диаграмма компонентов Device Service](diagrams/images/device_service-__Device_Service.png)
+![Диаграмма компонентов Device Service](diagrams/component/device_service.png)
 5. **Telemetry Service** - сервис для сбора и хранения телеметрии. \
 [Диаграмма компонентов Telemetry Service](diagrams/component/telemetry_service.puml)
-![Диаграмма компонентов Telemetry Service](diagrams/images/telemetry_service-__Telemetry_Service.png)
+![Диаграмма компонентов Telemetry Service](diagrams/component/telemetry_service.png)
 6. **Automation Service** не проработан в этом задании, обозначен для реализации в будущем.
 7. **Notification Service** не проработан в этом задании, обозначен для реализации в будущем.
 
