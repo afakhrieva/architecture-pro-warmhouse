@@ -30,26 +30,24 @@ jobs:
           # Скачиваем PlantUML с C4 плагином
           wget https://github.com/plantuml/plantuml/releases/download/v1.2024.0/plantuml-1.2024.0.jar -O plantuml.jar
 
-          # Создаем директорию для includes если её нет
-          mkdir -p includes/C4
-
-      - name: Download C4 includes
+      - name: Setup C4 includes
         run: |
-          # Скачиваем C4-файлы напрямую
-          wget https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml -O includes/C4/C4_Context.puml
-          wget https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml -O includes/C4/C4_Container.puml
-          wget https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml -O includes/C4/C4_Component.puml
-          wget https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4.puml -O includes/C4/C4.puml
+          mkdir -p ~/.plantuml
+          cd ~/.plantuml
+          wget https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+          wget https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+          wget https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+          wget https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4.puml
+          
+          # Устанавливаем переменную окружения для поиска includes
+          echo "PLANTUML_LIBS=~/.plantuml" >> $GITHUB_ENV
 
       - name: Generate Diagrams
         run: |
-          # Указываем PlantUML где искать includes
-          for file in diagrams/context/*.puml diagrams/container/*.puml diagrams/component/*.puml diagrams/code/*.puml; do
-            if [ -f "$file" ]; then
-              echo "Processing $file"
-              java -jar plantuml.jar -charset UTF-8 -Iincludes/ "$file"
-            fi
-          done
+          java -jar plantuml.jar -charset UTF-8 diagrams/context/*.puml
+          java -jar plantuml.jar -charset UTF-8 diagrams/container/*.puml
+          java -jar plantuml.jar -charset UTF-8 diagrams/component/*.puml
+          java -jar plantuml.jar -charset UTF-8 diagrams/code/*.puml
 
       - name: Commit Diagrams
         run: |
