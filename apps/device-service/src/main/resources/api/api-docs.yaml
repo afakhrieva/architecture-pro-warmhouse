@@ -1,0 +1,406 @@
+openapi: 3.1.0
+info:
+  title: OpenAPI definition
+  version: v0
+servers:
+- url: http://localhost:8002
+  description: Generated server url
+paths:
+  /api/devices:
+    get:
+      tags:
+      - device-controller
+      operationId: getDevices
+      parameters:
+      - name: homeId
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int64
+      - name: roomId
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int64
+      - name: type
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - LIGHT
+          - SWITCH
+          - SOCKET
+          - THERMOSTAT
+          - GARAGE_DOOR
+          - ENTRANCE_GATE
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DeviceResponse"
+    post:
+      tags:
+      - device-controller
+      operationId: createDevice
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateDeviceRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/DeviceResponse"
+  /api/devices/{deviceId}/state:
+    get:
+      tags:
+      - device-state-controller
+      operationId: getDeviceState
+      parameters:
+      - name: deviceId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/DeviceStateResponse"
+    post:
+      tags:
+      - device-state-controller
+      operationId: updateDeviceState
+      parameters:
+      - name: deviceId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties:
+                type: object
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/DeviceStateResponse"
+  /api/devices/{deviceId}/commands:
+    post:
+      tags:
+      - command-controller
+      operationId: sendCommand
+      parameters:
+      - name: deviceId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CommandRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/CommandResponse"
+  /api/devices/commands/batch:
+    post:
+      tags:
+      - command-controller
+      operationId: sendBatchCommands
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BatchCommandRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CommandResponse"
+  /api/devices/{deviceId}:
+    get:
+      tags:
+      - device-controller
+      operationId: getDevice
+      parameters:
+      - name: deviceId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/DeviceResponse"
+    delete:
+      tags:
+      - device-controller
+      operationId: deleteDevice
+      parameters:
+      - name: deviceId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+    patch:
+      tags:
+      - device-controller
+      operationId: updateDevice
+      parameters:
+      - name: deviceId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateDeviceRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/DeviceResponse"
+  /api/devices/commands/{commandId}:
+    get:
+      tags:
+      - command-controller
+      operationId: getCommand
+      parameters:
+      - name: commandId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Command"
+components:
+  schemas:
+    CreateDeviceRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+          enum:
+          - LIGHT
+          - SWITCH
+          - SOCKET
+          - THERMOSTAT
+          - GARAGE_DOOR
+          - ENTRANCE_GATE
+        homeId:
+          type: integer
+          format: int64
+        roomId:
+          type: integer
+          format: int64
+        capabilities:
+          type: array
+          items:
+            type: string
+            enum:
+            - POWER
+            - BRIGHTNESS
+            - TEMPERATURE
+      required:
+      - homeId
+      - name
+      - type
+    DeviceResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+          enum:
+          - LIGHT
+          - SWITCH
+          - SOCKET
+          - THERMOSTAT
+          - GARAGE_DOOR
+          - ENTRANCE_GATE
+        homeId:
+          type: integer
+          format: int64
+        roomId:
+          type: integer
+          format: int64
+        userId:
+          type: string
+        status:
+          type: string
+          enum:
+          - ONLINE
+          - OFFLINE
+        capabilities:
+          type: array
+          items:
+            type: string
+            enum:
+            - POWER
+            - BRIGHTNESS
+            - TEMPERATURE
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+    DeviceStateResponse:
+      type: object
+      properties:
+        device_id:
+          type: string
+        timestamp:
+          type: string
+        state:
+          type: object
+          additionalProperties:
+            type: object
+    CommandRequest:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+          - SET_POWER
+          - SET_TEMPERATURE
+          - SET_MODE
+        params:
+          type: object
+          additionalProperties:
+            type: object
+    CommandResponse:
+      type: object
+      properties:
+        commandId:
+          type: string
+        deviceId:
+          type: string
+        type:
+          type: string
+          enum:
+          - SET_POWER
+          - SET_TEMPERATURE
+          - SET_MODE
+        status:
+          type: string
+          enum:
+          - PENDING
+          - SENT
+          - DELIVERED
+          - FAILED
+        createdAt:
+          type: string
+    BatchCommandItem:
+      type: object
+      properties:
+        deviceId:
+          type: string
+        type:
+          type: string
+          enum:
+          - SET_POWER
+          - SET_TEMPERATURE
+          - SET_MODE
+        params:
+          type: object
+          additionalProperties:
+            type: object
+    BatchCommandRequest:
+      type: object
+      properties:
+        commands:
+          type: array
+          items:
+            $ref: "#/components/schemas/BatchCommandItem"
+    UpdateDeviceRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        roomId:
+          type: integer
+          format: int64
+    Command:
+      type: object
+      properties:
+        id:
+          type: string
+        deviceId:
+          type: string
+        type:
+          type: string
+          enum:
+          - SET_POWER
+          - SET_TEMPERATURE
+          - SET_MODE
+        params:
+          type: object
+          additionalProperties:
+            type: object
+        status:
+          type: string
+          enum:
+          - PENDING
+          - SENT
+          - DELIVERED
+          - FAILED
+        createdAt:
+          type: string
+          format: date-time
+        executedAt:
+          type: string
+          format: date-time
+        error:
+          type: string

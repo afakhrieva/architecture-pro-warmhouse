@@ -18,11 +18,11 @@ services:
 #  temperature-api:
   ## тут нужно добавить приложение
 
-  app:
+  smart-home:
     build:
       context: ./smart_home
       dockerfile: Dockerfile
-    container_name: smarthome-app
+    container_name: smart-home
     depends_on:
       postgres:
         condition: service_healthy
@@ -32,7 +32,7 @@ services:
       - DATABASE_URL=postgres://postgres:postgres@postgres:5432/smarthome
       - TEMPERATURE_API_URL=http://temperature-api:8081
     ports:
-      - "8080:8080"
+      - "8082:8080"
     restart: unless-stopped
     networks:
       - smarthome-network
@@ -53,6 +53,43 @@ services:
     networks:
       - smarthome-network
 
+  device-service:
+    build:
+      context: ./device-service
+      dockerfile: Dockerfile
+    container_name: device-service
+    ports:
+      - "8002:8002"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SERVER_PORT=8002
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=device_db
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      redpanda:
+        condition: service_healthy
+    volumes:
+      - ./device-service/src:/app/src
+      - ./device-service/build.gradle.kts:/app/build.gradle.kts
+    networks:
+      - smarthome-network
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8002/actuator/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
   telemetry-service:
     build:
       context: ./telemetry-service
@@ -72,6 +109,31 @@ services:
         condition: service_healthy
     networks:
       - smarthome-network
+
+  api-gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
+    container_name: api-gateway
+    ports:
+      - "8080:8080"  # Gateway наружу на 8080
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - JAVA_OPTS=-Xmx512m -Xms256m
+    networks:
+      - smarthome-network
+    depends_on:
+      - user-service
+      - device-service
+      - telemetry-service
+      - smart-home
+     # - temperatura-api
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/actuator/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   redis:
     image: redis:7-alpine
