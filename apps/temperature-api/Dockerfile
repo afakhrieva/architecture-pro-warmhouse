@@ -7,7 +7,7 @@ COPY go.mod ./
 COPY *.go ./
 
 # Собираем приложение
-RUN go build -o api-gateway
+RUN go build -o temperature-app
 
 # Финальный образ
 FROM alpine:latest
@@ -15,10 +15,10 @@ FROM alpine:latest
 WORKDIR /app
 
 # Копируем скомпилированное приложение из builder
-COPY --from=builder /app/api-gateway .
+COPY --from=builder /app/temperature-app .
 
 # Порт приложения
-EXPOSE 8080
+EXPOSE 8081
 
 # Запуск
-CMD ["./api-gateway"]
+CMD ["./temperature-app"]
