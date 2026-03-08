@@ -1,0 +1,79 @@
+@startuml
+title Class Diagram - Telemetry Service
+
+class TelemetryStore {
+    - redis: Redis
+    - ttl_seconds: int
+    + __init__(redis_url: str)
+    + connect()
+    + close()
+    + save_batch(points: List[Tuple[str, str, float, float]])
+    + get_history(device_id: str, metric: str, from_time: float, to_time: float, limit: int) : List[Tuple[str, float]]
+    + get_latest(device_id: str, metric: str) : Optional[Tuple[str, float]]
+    + get_latest_batch(device_id: str, metrics: List[str]) : dict
+}
+
+class TelemetryConsumer {
+    - store: TelemetryStore
+    - consumer: AIOKafkaConsumer
+    - running: bool
+    + __init__(store: TelemetryStore)
+    + start()
+    + stop()
+    - _consume_loop()
+    - _process_message(raw_data: dict)
+    - _extract_metrics(device_id: str, prefix: str, obj: any, timestamp: float, points: list)
+    - _safe_json_deserialize(data: bytes) : dict
+}
+
+class Settings {
+    - kafka_topic: str
+    - kafka_servers: str
+    - kafka_group_id: str
+    - redis_url: str
+    - redis_ttl_days: int
+    - api_port: int
+}
+
+class TelemetryPoint {
+    + time: str
+    + value: float
+}
+
+class TelemetryResponse {
+    + device_id: str
+    + metric: str
+    + data: List[TelemetryPoint]
+}
+
+class RawTelemetryMessage {
+    + device_id: str
+    + timestamp: Optional[str]
+    + payload: Dict[str, Any]
+}
+
+class APIRouter {
+    + get_telemetry()
+    + get_latest()
+    + get_latest_metric()
+    + debug()
+    + health()
+}
+
+class get_store_dep {
+    + __call__() : TelemetryStore
+}
+
+TelemetryConsumer --> TelemetryStore : uses
+TelemetryConsumer --> RawTelemetryMessage : validates
+TelemetryConsumer --> Settings : reads
+
+TelemetryStore --> Settings : reads
+
+APIRouter --> get_store_dep : depends on
+get_store_dep --> TelemetryStore : returns
+APIRouter --> TelemetryStore : calls
+APIRouter --> TelemetryResponse : returns
+APIRouter --> TelemetryPoint : uses
+
+@enduml

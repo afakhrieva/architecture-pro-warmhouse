@@ -1,0 +1,75 @@
+@startuml
+
+title Диаграмма контейнеров Умный дом
+
+top to bottom direction
+
+!include <C4/C4_Component>
+!include <C4/C4_Context>
+!include <C4/C4_Container>
+
+Person(user, "Клиент", "Мобильное приложение")
+
+System_Ext(EmailService, "Email Service")
+System_Ext(PushService, "Push Notification Service")
+
+System_Ext(Device1, "Device 1", "", "")
+System_Ext(Device2, "Device 2", "", "")
+
+System_Boundary(SmartHome, "Система Умный дом") {
+    Container(ApiGateway, "API Gateway", "", "Точка входа, авторизация JWT", )
+
+    Container(AuthService, "Authentication Service", "", "Проверка credentials, генерация JWT, сохранение refresh")
+    ComponentDb(AuthDB, "Auth DB", "postgres", "Учетные записи, refresh токены")
+
+    Container(UserService, "Users Management Service", "", "Управление пользователями, домами")
+    ComponentDb(UsersDB, "Users DB", "postgres", "Пользователи, права, дома, помещения")
+
+    Container(DeviceService, "Device Service", "", "Управление устройствами")
+    ComponentDb(DeviceDB, "Device DB", "postgres", "Устройства, спецификации устройств")
+
+    Container(TelemetryService, "Telemetry Service", "", "Телеметрия и Хранение данных")
+    ComponentDb(TelemetryDB, "Telemetry DB", TimeSeries/Redis, "Данные с устройств, телеметрия")
+
+    Container(AutomationService, "Automation Service", "", "Управление сценариями")
+    ComponentDb(AutomationDB, "Automation DB", "postgres", "Сценарии, правила автоматизации")
+
+    Container(NotificationService, "NotificationService", "Отправка уведомлений")
+
+    ComponentQueue(EventBus, "Внутренняя шина событий", "Kafka/RabbitMQ", "События умного дома, пример - TemperatureExceeded, DeviceTurnedOn и т.п.")
+
+    System(MQTT, "MQTT Broker", "Шлюз устройств")
+
+    Rel(user, ApiGateway, " ", "HTTPS/WebSocket")
+
+    Rel(ApiGateway, AuthService, "register/login", "REST/HTTP")
+    Rel(AuthService, AuthDB, " ")
+
+    Rel(ApiGateway, UserService, "get/update profile", "REST/HTTP")
+    Rel(UserService, UsersDB, " ")
+
+    Rel(ApiGateway, DeviceService, "add/get/update device", "REST/HTTP")
+    Rel(DeviceService, DeviceDB, " ")
+
+    Rel(ApiGateway, TelemetryService, "get telemetry data", "REST/HTTP")
+    Rel(TelemetryService, TelemetryDB, " ")
+
+    Rel(ApiGateway, AutomationService, "add/get/update scenarios, apply actions", "REST/HTTP")
+    Rel(AutomationService, AutomationDB, " ")
+    Rel(AutomationService, DeviceService, "send commands to devices", "REST/HTTP")
+
+    Rel(DeviceService, EventBus, "send events")
+    Rel(EventBus, TelemetryService, "listen events topic")
+    Rel(EventBus, AutomationService, "listen events topic")
+    Rel(EventBus, NotificationService, "listen events topic")
+
+    Rel(NotificationService, EmailService, " ")
+    Rel(NotificationService, PushService, " ")
+
+    BiRel(DeviceService, MQTT, " ")
+}
+
+Rel(MQTT, Device1, " ")
+Rel(MQTT, Device2, " ")
+
+@enduml

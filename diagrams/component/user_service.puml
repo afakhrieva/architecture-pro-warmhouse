@@ -1,0 +1,54 @@
+@startuml
+
+title Диаграмма компонентов User Management Service
+
+top to bottom direction
+
+!include <C4/C4_Component>
+!include <C4/C4_Context>
+!include <C4/C4_Container>
+
+Person(client, "Клиент", "Мобильное приложение")
+
+System_Ext(ApiGateway, "API Gateway", "Проксирует запросы и проверяет токены")
+SystemQueue_Ext(EventBus, "Внутренняя шина событий", "kafka")
+
+Container_Boundary(user_service, "User Management Service") {
+
+    Boundary(rest_api, "REST Api Controllers Layer"){
+         Component(UsersApi, "Users API контроллер", "HTTP Handlers", "Обрабатывает входящие HTTP запросы: /users*")
+         Component(HomesApi, "Homes API контроллер", "HTTP Handlers", "Обрабатывает входящие HTTP запросы: /homes*")
+         Component(LocationsApi, "Locations API контроллер", "HTTP Handlers", "Обрабатывает входящие HTTP запросы: /locations*")
+    }
+
+    Boundary(service, "Service Layer"){
+        Component(UsersLogic, "Users Logic Layer", "Сервисный слой", "Содержит бизнес-логику профиля пользователя")
+        Component(HomesLogic, "Homes Logic Layer", "Сервисный слой", "Содержит бизнес-логику домов")
+        Component(LocationsLogic, "Locations Logic Layer", "Сервисный слой", "Содержит бизнес-логику помещений")
+    }
+
+    Boundary(dao, "DAO Layer")  {
+        Component(UsersRepository, "Users Repository", "DAO слой", "Работа с БД: CRUD операции для профилем пользователя")
+        Component(HomesRepository, "Homes Repository", "DAO слой", "Работа с БД: CRUD операции для домов")
+        Component(LocationsRepository, "Locations Repository", "DAO слой", "Работа с БД: CRUD операции для помещений")
+    }
+
+    ComponentDb(UserHomesDB, "User Homes DB", "Хранит все данные пользователей, домов и помещений", "postgres")
+
+    Rel(rest_api, service, " ")
+    Rel(service, dao, " ")
+
+    Rel(UsersRepository, UserHomesDB, "SQL запросы", "SELECT/INSERT/UPDATE")
+    Rel(HomesRepository, UserHomesDB, "SQL запросы", "SELECT/INSERT/DELETE")
+    Rel(LocationsRepository, UserHomesDB, "SQL запросы", "SELECT/INSERT/DELETE")
+}
+
+Rel(service, EventBus, "шлем CRUD события")
+
+' Связи с внешним миром
+Rel(client, ApiGateway, "Запрос", "https")
+Rel(ApiGateway, UsersApi, "/users*", "http")
+Rel(ApiGateway, HomesApi, "/homes*", "http")
+Rel(ApiGateway, LocationsApi, "/locations", "http")
+
+@enduml

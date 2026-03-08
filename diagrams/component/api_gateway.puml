@@ -1,0 +1,44 @@
+@startuml
+
+title Диаграмма компонентов API Gateway
+
+top to bottom direction
+
+!include <C4/C4_Component>
+!include <C4/C4_Context>
+!include <C4/C4_Container>
+
+Person(client, "Клиент", "Мобильное приложение")
+
+System_Ext(UserService, "User Service")
+System_Ext(AutomationService, "Automation Service")
+System_Ext(DeviceService, "Device Service")
+System_Ext(TelemetryService, "Telemetry Service")
+
+Container_Boundary(gateway, "API Gateway") {
+
+    Component(AuthFilter, "Фильтр аутентификации", "Middleware", "Перехватывает запросы, проверяет JWT токен через Auth Service")
+    Component(RateLimiter, "Лимитер запросов", "Middleware", "Ограничивает количество запросов с одного IP/UserID (Redis)")
+    Component(Router, "Маршрутизатор", "Код", "Анализирует путь запроса, определяет целевой сервис")
+    Component(Registry, "Клиент сервис-реестра", "Код", "Получает актуальные адреса сервисов из конфига")
+    Component(Proxy, "Прокси-движок", "ReverseProxy", "Перенаправляет запрос к целевому сервису и возвращает ответ")
+
+    Rel(client, AuthFilter, "1. Запрос", "HTTPS")
+
+    Rel(AuthFilter, RateLimiter, "2. Токен валиден", "передает запрос")
+    Rel(RateLimiter, Router, "3. Лимит не превышен", "передает запрос")
+
+    Rel(Router, Registry, "4. Запрос адреса для пути", "")
+    Rel(Registry, Router, "5. Возвращает адрес:port", "")
+
+    Rel(Router, Proxy, "6. Передает запрос и адрес", "внутренний вызов")
+}
+
+Rel(Proxy, UserService, "7. Перенаправляет /api/users/*", "HTTP")
+Rel(Proxy, AutomationService, "/api/scene/*", "HTTP")
+Rel(Proxy, DeviceService, "/api/device/*", "HTTP")
+Rel(Proxy, TelemetryService, "/api/telemetry/*", "HTTP")
+
+Rel(Proxy, client, "8. Возвращает ответ", "HTTPS")
+
+@enduml

@@ -4,32 +4,167 @@ services:
   postgres:
     image: postgres:16-alpine
     container_name: smarthome-postgres
-  ## тут нужно добавить настройки
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./smart_home/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - smarthome-network
 
   temperature-api:
-  ## тут нужно добавить приложение
-
-  app:
     build:
-      context: ./smart_home
-      dockerfile: Dockerfile
-    container_name: smarthome-app
-    depends_on:
-      postgres:
-        condition: service_healthy
-      temperature-api:
-        condition: service_started
-    environment:
-      - DATABASE_URL=postgres://postgres:postgres@postgres:5432/smarthome
-      - TEMPERATURE_API_URL=http://temperature-api:8081
+      context: ./temperature-api
+    container_name: temperature-api
     ports:
-      - "8080:8080"
+      - "8081:8081"
     restart: unless-stopped
     networks:
       - smarthome-network
 
+  smart-home:
+    build:
+      context: ./smart_home
+      dockerfile: Dockerfile
+    container_name: smart-home
+    depends_on:
+      postgres:
+        condition: service_healthy
+      temperature-api:
+         condition: service_started
+    environment:
+      - DATABASE_URL=postgres://postgres:postgres@postgres:5432/smarthome
+      - TEMPERATURE_API_URL=http://temperature-api:8081
+    ports:
+      - "8082:8080"   # поменяла внешний порт, тк gateway теперь порту на 8080
+    restart: unless-stopped
+    networks:
+      - smarthome-network
+
+  user-service:
+    build:
+      context: ./user-service
+      dockerfile: Dockerfile
+    container_name: user-service
+    ports:
+      - "8001:8001"
+    environment:
+      - ENVIRONMENT=development
+      - DEBUG=true
+      - SERVICE_NAME=user-service
+      - PORT=8001
+    restart: unless-stopped
+    networks:
+      - smarthome-network
+
+  device-service:
+    build:
+      context: ./device-service
+      dockerfile: Dockerfile
+    container_name: device-service
+    ports:
+      - "8002:8002"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SERVER_PORT=8002
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=device_db
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      redpanda:
+        condition: service_healthy
+    volumes:
+      - ./device-service/src:/app/src
+      - ./device-service/build.gradle.kts:/app/build.gradle.kts
+    networks:
+      - smarthome-network
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8002/actuator/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  telemetry-service:
+    build:
+      context: ./telemetry-service
+      dockerfile: Dockerfile
+    container_name: telemetry-service
+    ports:
+      - "8003:8003"
+    env_file:
+      - ./telemetry-service/.env
+    environment:
+      - KAFKA_SERVERS=redpanda:9092
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      redis:
+        condition: service_healthy
+      redpanda:
+        condition: service_healthy
+    networks:
+      - smarthome-network
+
+  api-gateway:
+    build:
+      context: ./api-gateway
+    container_name: api-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      - USER_SERVICE_URL=http://user-service:8001
+      - DEVICE_SERVICE_URL=http://device-service:8002
+      - TELEMETRY_SERVICE_URL=http://telemetry-service:8003
+      - SMART_HOME_URL=http://smart-home:8080
+      - PORT=8080
+    restart: unless-stopped
+    networks:
+      - smarthome-network
+
+  redpanda:
+    image: docker.redpanda.com/redpandadata/redpanda:v23.3.5
+    container_name: redpanda-event-bus
+    command:
+      - redpanda start
+      - --smp 1
+      - --memory 1G
+      - --overprovisioned
+      - --node-id 0
+      - --kafka-addr PLAINTEXT://0.0.0.0:9092
+      - --advertise-kafka-addr PLAINTEXT://redpanda:9092
+    ports:
+      - "9092:9092"
+    volumes:
+      - redpanda_data:/var/lib/redpanda/data
+    networks:
+      - smarthome-network
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --maxmemory 1gb --maxmemory-policy allkeys-lru
+    networks:
+      - smarthome-network
+
 volumes:
-  postgres_data:
+  postgres-data:
+  redis_data:
+  redpanda_data:
 
 networks:
   smarthome-network:
