@@ -39,10 +39,10 @@ class TelemetryStore:
         """
         key = f"telemetry:{device_id}:{metric}"
 
-        # Добавляем в sorted set (score = timestamp, member = value)
-        await self.redis.zadd(key, {str(value): timestamp})
+        # Используем значение + timestamp как уникальный member
+        member = f"{value}:{timestamp}"
 
-        # Устанавливаем TTL
+        await self.redis.zadd(key, {member: timestamp})
         await self.redis.expire(key, self.ttl_seconds)
 
         logger.debug(f" Saved {device_id}:{metric} = {value} at {timestamp}")
@@ -59,7 +59,9 @@ class TelemetryStore:
 
         for device_id, metric, timestamp, value in points:
             key = f"telemetry:{device_id}:{metric}"
-            pipeline.zadd(key, {str(value): timestamp})
+            member = f"{value}:{timestamp}"
+
+            pipeline.zadd(key, {member: timestamp})
             pipeline.expire(key, self.ttl_seconds)
 
         await pipeline.execute()
@@ -69,7 +71,7 @@ class TelemetryStore:
                           from_time: float, to_time: float,
                           limit: int = 1000) -> List[Tuple[str, float]]:
         """
-        Получить историю значений используя ZRANGE с BYSCORE
+        Получить историю значений
         """
         key = f"telemetry:{device_id}:{metric}"
 
@@ -83,27 +85,30 @@ class TelemetryStore:
             num=limit
         )
 
+
         result = []
-        for value_str, ts in points:
+        for member, ts in points:
+            # Извлекаем значение из member (формат "value:timestamp")
+            value_str = member.split(':')[0]
             time_iso = datetime.fromtimestamp(ts).isoformat()
             result.append((time_iso, float(value_str)))
 
-        logger.debug(f"Retrieved {len(result)} points for {device_id}:{metric}")
         return result
 
     async def get_latest(self, device_id: str, metric: str) -> Optional[Tuple[str, float]]:
         """
         Получить последнее значение метрики
-        Возвращает (time_iso, value) или None
         """
         key = f"telemetry:{device_id}:{metric}"
 
-        # Получаем все значения с сортировкой по убыванию
-        all_values = await self.redis.zrevrange(key, 0, -1, withscores=True)
+        # Получаем последние 10 записей (на случай одинаковых значений)
+        all_values = await self.redis.zrevrange(key, 0, 9, withscores=True)
 
         if all_values:
-            # Берём первое (самое новое)
-            value_str, ts = all_values[0]
+            # Берём самую последнюю по времени
+            latest = max(all_values, key=lambda x: x[1])
+            member, ts = latest
+            value_str = member.split(':')[0]
             return (datetime.fromtimestamp(ts).isoformat(), float(value_str))
         return None
 
@@ -115,14 +120,17 @@ class TelemetryStore:
 
         for metric in metrics:
             key = f"telemetry:{device_id}:{metric}"
-            pipeline.zrevrange(key, 0, 0, withscores=True)
+            pipeline.zrevrange(key, 0, 9, withscores=True)  # берем последние 10
 
         results = await pipeline.execute()
 
         latest = {}
         for metric, result in zip(metrics, results):
             if result:
-                value_str, ts = result[0]
+                # Находим самую последнюю по времени
+                latest_entry = max(result, key=lambda x: x[1])
+                member, ts = latest_entry
+                value_str = member.split(':')[0]
                 latest[metric] = {
                     "value": float(value_str),
                     "time": datetime.fromtimestamp(ts).isoformat()

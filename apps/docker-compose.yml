@@ -135,6 +135,7 @@ services:
 
   redpanda:
     image: docker.redpanda.com/redpandadata/redpanda:v23.3.5
+    container_name: redpanda-event-bus
     command:
       - redpanda start
       - --smp 1
@@ -147,6 +148,16 @@ services:
       - "9092:9092"
     volumes:
       - redpanda_data:/var/lib/redpanda/data
+    networks:
+      - smarthome-network
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --maxmemory 1gb --maxmemory-policy allkeys-lru
     networks:
       - smarthome-network
 

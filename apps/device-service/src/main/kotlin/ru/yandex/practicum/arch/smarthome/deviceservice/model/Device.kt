@@ -8,7 +8,7 @@ data class Device(
     val name: String,
     val type: DeviceType,
     val homeId: Long,
-    val roomId: Long? = null,
+    val locationId: Long? = null,
     val userId: String,
     val status: DeviceStatus,
     val capabilities: List<DeviceCapability> = emptyList(),

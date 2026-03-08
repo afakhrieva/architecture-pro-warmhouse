@@ -20,7 +20,7 @@ class DeviceService(
             name = request.name,
             type = request.type,
             homeId = request.homeId,
-            roomId = request.roomId,
+            locationId = request.locationId,
             userId = userId,
             status = DeviceStatus.OFFLINE,
             capabilities = request.capabilities
@@ -43,10 +43,10 @@ class DeviceService(
         return devices[deviceId]?.let { toResponse(it) }
     }
 
-    fun getAllDevices(homeId: Long?, roomId: Long?, type: DeviceType?): List<DeviceResponse> {
+    fun getAllDevices(homeId: Long?, locationId: Long?, type: DeviceType?): List<DeviceResponse> {
         return devices.values
             .filter { homeId == null || it.homeId == homeId }
-            .filter { roomId == null || it.roomId == roomId }
+            .filter { locationId == null || it.locationId == locationId }
             .filter { type == null || it.type == type }
             .map { toResponse(it) }
     }
@@ -56,7 +56,7 @@ class DeviceService(
 
         val updatedDevice = device.copy(
             name = request.name ?: device.name,
-            roomId = request.roomId ?: device.roomId,
+            locationId = request.locationId ?: device.locationId,
             updatedAt = Instant.now()
         )
 
@@ -83,7 +83,7 @@ class DeviceService(
             name = device.name,
             type = device.type,
             homeId = device.homeId,
-            roomId = device.roomId,
+            locationId = device.locationId,
             userId = device.userId,
             status = device.status,
             capabilities = device.capabilities,

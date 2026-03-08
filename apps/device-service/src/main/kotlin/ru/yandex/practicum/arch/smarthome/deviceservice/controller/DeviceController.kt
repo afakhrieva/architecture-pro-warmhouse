@@ -25,10 +25,10 @@ class DeviceController(
     @GetMapping
     fun getDevices(
         @RequestParam(required = false) homeId: Long?,
-        @RequestParam(required = false) roomId: Long?,
+        @RequestParam(required = false) locationId: Long?,
         @RequestParam(required = false) type: DeviceType?,
     ): List<DeviceResponse> {
-        return deviceService.getAllDevices(homeId, roomId, type)
+        return deviceService.getAllDevices(homeId, locationId, type)
     }
 
     @GetMapping("/{deviceId}")

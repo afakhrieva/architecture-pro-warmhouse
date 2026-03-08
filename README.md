@@ -162,100 +162,206 @@
 1. API Gateway проксирует запросы от клиента, поэтому тут будет совокупность всех API
 
 2. Authentication Service REST Api
+[Open API Spec](apps/auth-service/open-api/api.yaml)
+```
+# Регистрация и управление пользователями
+
+POST   /api/auth/register                 # Регистрация нового пользователя
+POST   /api/auth/login                     # Вход в систему (получение токена)
+POST   /api/auth/logout                     # Выход из системы
+POST   /api/auth/refresh                     # Обновление токена
+
+# Проверка и валидация
+
+GET    /api/auth/validate/{token}            # Проверить валидность токена
+GET    /api/auth/userinfo                     # Получить информацию о текущем пользователе
+```
 
 3. User Management Service REST Api
+[Open API Spec](apps/user-service/app/open-api/api.json)
+```
+# Управление пользователями
 
-4. Device Service REST Api [Open Api Spec](apps/device-service/src/main/resources/api/api-docs.yaml)
+POST   /users                          # Создать профиль пользователя
+GET    /users/me                        # Получить профиль текущего пользователя
+PATCH  /users/me                        # Обновить профиль текущего пользователя
+GET    /users/{user_id}                  # Получить пользователя по ID (внутренний)
+
+# Управление домами
+
+POST   /homes                           # Создать новый дом
+GET    /homes                            # Получить все дома текущего пользователя
+GET    /homes/{home_id}                   # Получить дом по ID
+PATCH  /homes/{home_id}                   # Обновить дом
+DELETE /homes/{home_id}                   # Удалить дом
+
+# Управление комнатами
+
+POST   /locations                        # Создать новую комнату
+GET    /locations/home/{home_id}          # Получить все комнаты в доме
+GET    /locations/{location_id}           # Получить комнату по ID
+PATCH  /locations/{location_id}           # Обновить комнату
+DELETE /locations/{location_id}           # Удалить комнату
+
+# Системные
+
+GET    /health                           # Проверка здоровья сервиса
+GET    /                                 # Корневой эндпоинт
+```
+
+4. Device Service REST Api 
+[Open Api Spec](apps/device-service/src/main/resources/api/api-docs.yaml)
 
 ```
-# BASIC CRUD
-POST   /api/devices                    # создать устройство
-GET    /api/devices                     # список устройств (с фильтрами)
-GET    /api/devices/{device_id}         # получить устройство
-PATCH  /api/devices/{device_id}         # обновить устройство
-DELETE /api/devices/{device_id}         # удалить устройство
+# Управление устройствами
 
-# STATE
-GET    /api/devices/{device_id}/state   # состояние
+GET    /api/devices                           # Получить список устройств (с фильтрацией)
+POST   /api/devices                           # Создать новое устройство
+GET    /api/devices/{deviceId}                # Получить устройство по ID
+PATCH  /api/devices/{deviceId}                # Обновить устройство
+DELETE /api/devices/{deviceId}                # Удалить устройство
 
-# COMMANDS 
-POST   /api/devices/{device_id}/commands     # отправить команду
-POST   /api/devices/commands/batch           # массовые команды
-GET    /api/devices/commands/{command_id}    # статус команды
+# Управление состоянием
+
+GET    /api/devices/{deviceId}/state          # Получить текущее состояние устройства
+POST   /api/devices/{deviceId}/state          # Обновить состояние устройства (внутренний)
+
+# Управление командами
+
+POST   /api/devices/{deviceId}/commands       # Отправить команду устройству
+POST   /api/devices/commands/batch            # Отправить несколько команд одновременно
+GET    /api/devices/commands/{commandId}      # Получить статус команды
 ```
 
 5. Telemetry Service REST Api
-
+[Open API Spec](apps/telemetry-service/app/open-api/api.json)
 ```
-# TELEMETRY
-GET    /api/devices/{device_id}/telemetry          # история
-GET    /api/devices/{device_id}/telemetry/summary  # сводка
+# Телеметрия устройств
+
+GET    /api/telemetry/{device_id}/{metric}          # Получить историю телеметрии устройства за последние N часов
+GET    /api/telemetry/{device_id}/latest            # Получить последние значения нескольких метрик
+GET    /api/telemetry/{device_id}/{metric}/latest   # Получить последнее значение конкретной метрики
+
+# Системные
+
+GET    /debug                                        # Отладочная информация
+GET    /                                             # Корневой эндпоинт
 ```
 
 
 # Задание 5. Работа с docker и docker-compose
 
-Перейдите в apps.
-
-Там находится приложение-монолит для работы с датчиками температуры. В README.md описано как запустить решение.
-
-Вам нужно:
-
-1) сделать простое приложение temperature-api на любом удобном для вас языке программирования, которое при запросе /temperature?location= будет отдавать рандомное значение температуры.
-
-Locations - название комнаты, sensorId - идентификатор названия комнаты
-
-```
-	// If no location is provided, use a default based on sensor ID
-	if location == "" {
-		switch sensorID {
-		case "1":
-			location = "Living Room"
-		case "2":
-			location = "Bedroom"
-		case "3":
-			location = "Kitchen"
-		default:
-			location = "Unknown"
-		}
-	}
-
-	// If no sensor ID is provided, generate one based on location
-	if sensorID == "" {
-		switch location {
-		case "Living Room":
-			sensorID = "1"
-		case "Bedroom":
-			sensorID = "2"
-		case "Kitchen":
-			sensorID = "3"
-		default:
-			sensorID = "0"
-		}
-	}
-```
-
-2) Приложение следует упаковать в Docker и добавить в docker-compose. Порт по умолчанию должен быть 8081
-
-3) Кроме того для smart_home приложения требуется база данных - добавьте в docker-compose файл настройки для запуска postgres с указанием скрипта инициализации ./smart_home/init.sql
-
-Для проверки можно использовать Postman коллекцию smarthome-api.postman_collection.json и вызвать:
-
-- Create Sensor
-- Get All Sensors
-
-Должно при каждом вызове отображаться разное значение температуры
-
-Ревьюер будет проверять точно так же.
-
+curl "http://localhost:8082/api/v1/sensors/temperature/kitchen" - через smart-home (поменяла порт на 8082)
+curl "http://localhost:8081/temperature?location=kitchen" - напрямую из temperature-api
 
 # **Задание 6. Разработка MVP**
 
 Созданные микросервисы:
 1. API Gateway - прокси для всех запросов от клиента
 2. User Service - сервис управляющий пользователями, домами, помещениями.
+Можно проверять через API Gateway (`localhost:8080`) или напрямую в сервис(`localhost:8001`), заголовок `X-User-ID` обязателен.
+Через swagger http://localhost:8001/docs или `curl`. In memory база - после перезапуска данные будут потеряны.
+```
+Создать пользователя
+
+curl -X POST http://localhost:8080/api/users \
+  -H "Content-Type: application/json" \
+  -H "X-User-ID: 550e8400-e29b-41d4-a716-446655440000" \
+  -d '{
+    "email": "ivan@example.com",
+    "name": "Иван Петров",
+    "language": "ru"
+  }' | json_pp
+```
+
+```
+Получить пользователя (себя)
+
+curl -X GET -H "X-User-ID: 550e8400-e29b-41d4-a716-446655440000" http://localhost:8080/api/users/me  | json_pp
+```
+
+```
+Создать дом
+
+curl -X POST http://localhost:8080/api/homes \
+  -H "Content-Type: application/json" \
+  -H "X-User-ID: 550e8400-e29b-41d4-a716-446655440000" \
+  -d '{
+    "name": "Мой дом"
+  }' | json_pp
+```
+
+```
+Создать помещение в доме
+
+curl -X POST http://localhost:8080/api/locations \
+  -H "Content-Type: application/json" \
+  -H "X-User-ID: 550e8400-e29b-41d4-a716-446655440000" \
+  -d '{
+    "name": "Кухня",
+    "floor": 1,
+    "home_id": 1
+  }' | json_pp
+```
 3. Device Service - сервис управляющий устройствами.
+Также можно проверять через API Gateway (`localhost:8080`) или напрямую в сервис(`localhost:8002`).
+Через страничку docs http://localhost:8002/swagger-ui/index.html или `curl`. In memory база - после перезапуска данные будут потеряны.
+Отправка событий в EventBus не реализована.
+В этом сервисе camelCase в json, т.к. тут kotlin. В идеале привести к общему виду snake_case, как в других сервисах.
+
+```
+Создать девайс Лампа в кухне
+
+curl -X POST http://localhost:8080/api/devices \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Лампа в кухне",
+    "type": "LIGHT",
+    "homeId": 1,
+    "locationId": 1,
+    "capabilities": ["POWER", "BRIGHTNESS"]
+  }' | json_pp
+
+Создать девайс Датчик температуры
+
+curl -X POST http://localhost:8080/api/devices \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Датчик температуры",
+    "type": "THERMOSTAT",
+    "homeId": 1,
+    "roomId": 1,
+    "capabilities": ["TEMPERATURE"]
+  }' | json_pp
+
+```
+
+```
+Посмотреть все девайсы в комнате
+
+curl -X GET "http://localhost:8080/api/devices?homeId=1&locationId=1" | json_pp
+```
+
 4. Telemetry Service - сервис для сбора и хранения телеметрии.
+Тут подключены redis для хранения телеметрии и kafka consumer для чтения сообщений телеметрии.
+Open api docs страничка для просмотра данных http://localhost:8003/docs
+```
+Отправка телеметрии в EventBus (здесь redpanda)
+
+docker exec -it redpanda-event-bus /bin/bash
+
+rpk topic create device.telemetry --partitions 1
+
+echo '{"device_id": "123", "payload": {"temperature": 22.5}}' | rpk topic produce device.telemetry
+  
+удалить топик, если отправились плохие сообщение 
+rpk topic delete device.telemetry
+```
+
+```
+Проверить, что телеметрия сохранилась (в другом терминале)
+curl -X GET "http://localhost:8080/api/telemetry/123/temperature?hours=24&limit=1000" | json_pp
+```
 
 Auth Service - опущен.
 

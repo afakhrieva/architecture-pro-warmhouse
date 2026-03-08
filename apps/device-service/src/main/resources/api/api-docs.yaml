@@ -3,39 +3,39 @@ info:
   title: OpenAPI definition
   version: v0
 servers:
-- url: http://localhost:8002
-  description: Generated server url
+  - url: http://localhost:8002
+    description: Generated server url
 paths:
   /api/devices:
     get:
       tags:
-      - device-controller
+        - device-controller
       operationId: getDevices
       parameters:
-      - name: homeId
-        in: query
-        required: false
-        schema:
-          type: integer
-          format: int64
-      - name: roomId
-        in: query
-        required: false
-        schema:
-          type: integer
-          format: int64
-      - name: type
-        in: query
-        required: false
-        schema:
-          type: string
-          enum:
-          - LIGHT
-          - SWITCH
-          - SOCKET
-          - THERMOSTAT
-          - GARAGE_DOOR
-          - ENTRANCE_GATE
+        - name: homeId
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int64
+        - name: roomId
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int64
+        - name: type
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - LIGHT
+              - SWITCH
+              - SOCKET
+              - THERMOSTAT
+              - GARAGE_DOOR
+              - ENTRANCE_GATE
       responses:
         "200":
           description: OK
@@ -47,7 +47,7 @@ paths:
                   $ref: "#/components/schemas/DeviceResponse"
     post:
       tags:
-      - device-controller
+        - device-controller
       operationId: createDevice
       requestBody:
         content:
@@ -65,14 +65,14 @@ paths:
   /api/devices/{deviceId}/state:
     get:
       tags:
-      - device-state-controller
+        - device-state-controller
       operationId: getDeviceState
       parameters:
-      - name: deviceId
-        in: path
-        required: true
-        schema:
-          type: string
+        - name: deviceId
+          in: path
+          required: true
+          schema:
+            type: string
       responses:
         "200":
           description: OK
@@ -82,14 +82,14 @@ paths:
                 $ref: "#/components/schemas/DeviceStateResponse"
     post:
       tags:
-      - device-state-controller
+        - device-state-controller
       operationId: updateDeviceState
       parameters:
-      - name: deviceId
-        in: path
-        required: true
-        schema:
-          type: string
+        - name: deviceId
+          in: path
+          required: true
+          schema:
+            type: string
       requestBody:
         content:
           application/json:
@@ -108,14 +108,14 @@ paths:
   /api/devices/{deviceId}/commands:
     post:
       tags:
-      - command-controller
+        - command-controller
       operationId: sendCommand
       parameters:
-      - name: deviceId
-        in: path
-        required: true
-        schema:
-          type: string
+        - name: deviceId
+          in: path
+          required: true
+          schema:
+            type: string
       requestBody:
         content:
           application/json:
@@ -132,7 +132,7 @@ paths:
   /api/devices/commands/batch:
     post:
       tags:
-      - command-controller
+        - command-controller
       operationId: sendBatchCommands
       requestBody:
         content:
@@ -152,14 +152,14 @@ paths:
   /api/devices/{deviceId}:
     get:
       tags:
-      - device-controller
+        - device-controller
       operationId: getDevice
       parameters:
-      - name: deviceId
-        in: path
-        required: true
-        schema:
-          type: string
+        - name: deviceId
+          in: path
+          required: true
+          schema:
+            type: string
       responses:
         "200":
           description: OK
@@ -169,27 +169,27 @@ paths:
                 $ref: "#/components/schemas/DeviceResponse"
     delete:
       tags:
-      - device-controller
+        - device-controller
       operationId: deleteDevice
       parameters:
-      - name: deviceId
-        in: path
-        required: true
-        schema:
-          type: string
+        - name: deviceId
+          in: path
+          required: true
+          schema:
+            type: string
       responses:
         "200":
           description: OK
     patch:
       tags:
-      - device-controller
+        - device-controller
       operationId: updateDevice
       parameters:
-      - name: deviceId
-        in: path
-        required: true
-        schema:
-          type: string
+        - name: deviceId
+          in: path
+          required: true
+          schema:
+            type: string
       requestBody:
         content:
           application/json:
@@ -206,14 +206,14 @@ paths:
   /api/devices/commands/{commandId}:
     get:
       tags:
-      - command-controller
+        - command-controller
       operationId: getCommand
       parameters:
-      - name: commandId
-        in: path
-        required: true
-        schema:
-          type: string
+        - name: commandId
+          in: path
+          required: true
+          schema:
+            type: string
       responses:
         "200":
           description: OK
@@ -231,12 +231,12 @@ components:
         type:
           type: string
           enum:
-          - LIGHT
-          - SWITCH
-          - SOCKET
-          - THERMOSTAT
-          - GARAGE_DOOR
-          - ENTRANCE_GATE
+            - LIGHT
+            - SWITCH
+            - SOCKET
+            - THERMOSTAT
+            - GARAGE_DOOR
+            - ENTRANCE_GATE
         homeId:
           type: integer
           format: int64
@@ -248,13 +248,14 @@ components:
           items:
             type: string
             enum:
-            - POWER
-            - BRIGHTNESS
-            - TEMPERATURE
+              - POWER
+              - BRIGHTNESS
+              - TEMPERATURE
       required:
-      - homeId
-      - name
-      - type
+        - capabilities
+        - homeId
+        - name
+        - type
     DeviceResponse:
       type: object
       properties:
@@ -265,12 +266,12 @@ components:
         type:
           type: string
           enum:
-          - LIGHT
-          - SWITCH
-          - SOCKET
-          - THERMOSTAT
-          - GARAGE_DOOR
-          - ENTRANCE_GATE
+            - LIGHT
+            - SWITCH
+            - SOCKET
+            - THERMOSTAT
+            - GARAGE_DOOR
+            - ENTRANCE_GATE
         homeId:
           type: integer
           format: int64
@@ -282,24 +283,34 @@ components:
         status:
           type: string
           enum:
-          - ONLINE
-          - OFFLINE
+            - ONLINE
+            - OFFLINE
         capabilities:
           type: array
           items:
             type: string
             enum:
-            - POWER
-            - BRIGHTNESS
-            - TEMPERATURE
+              - POWER
+              - BRIGHTNESS
+              - TEMPERATURE
         createdAt:
           type: string
         updatedAt:
           type: string
+      required:
+        - capabilities
+        - createdAt
+        - homeId
+        - id
+        - name
+        - status
+        - type
+        - updatedAt
+        - userId
     DeviceStateResponse:
       type: object
       properties:
-        device_id:
+        deviceId:
           type: string
         timestamp:
           type: string
@@ -307,19 +318,26 @@ components:
           type: object
           additionalProperties:
             type: object
+      required:
+        - deviceId
+        - state
+        - timestamp
     CommandRequest:
       type: object
       properties:
         type:
           type: string
           enum:
-          - SET_POWER
-          - SET_TEMPERATURE
-          - SET_MODE
+            - SET_POWER
+            - SET_TEMPERATURE
+            - SET_MODE
         params:
           type: object
           additionalProperties:
             type: object
+      required:
+        - params
+        - type
     CommandResponse:
       type: object
       properties:
@@ -330,18 +348,24 @@ components:
         type:
           type: string
           enum:
-          - SET_POWER
-          - SET_TEMPERATURE
-          - SET_MODE
+            - SET_POWER
+            - SET_TEMPERATURE
+            - SET_MODE
         status:
           type: string
           enum:
-          - PENDING
-          - SENT
-          - DELIVERED
-          - FAILED
+            - PENDING
+            - SENT
+            - DELIVERED
+            - FAILED
         createdAt:
           type: string
+      required:
+        - commandId
+        - createdAt
+        - deviceId
+        - status
+        - type
     BatchCommandItem:
       type: object
       properties:
@@ -350,13 +374,17 @@ components:
         type:
           type: string
           enum:
-          - SET_POWER
-          - SET_TEMPERATURE
-          - SET_MODE
+            - SET_POWER
+            - SET_TEMPERATURE
+            - SET_MODE
         params:
           type: object
           additionalProperties:
             type: object
+      required:
+        - deviceId
+        - params
+        - type
     BatchCommandRequest:
       type: object
       properties:
@@ -364,6 +392,8 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/BatchCommandItem"
+      required:
+        - commands
     UpdateDeviceRequest:
       type: object
       properties:
@@ -382,9 +412,9 @@ components:
         type:
           type: string
           enum:
-          - SET_POWER
-          - SET_TEMPERATURE
-          - SET_MODE
+            - SET_POWER
+            - SET_TEMPERATURE
+            - SET_MODE
         params:
           type: object
           additionalProperties:
@@ -392,10 +422,10 @@ components:
         status:
           type: string
           enum:
-          - PENDING
-          - SENT
-          - DELIVERED
-          - FAILED
+            - PENDING
+            - SENT
+            - DELIVERED
+            - FAILED
         createdAt:
           type: string
           format: date-time
@@ -404,3 +434,10 @@ components:
           format: date-time
         error:
           type: string
+      required:
+        - createdAt
+        - deviceId
+        - id
+        - params
+        - status
+        - type

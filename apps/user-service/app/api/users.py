@@ -5,7 +5,7 @@ from app.deps import get_current_user_id, get_db
 from app.services.user_service import UserService
 from app.db.memory_db import MemoryDB
 
-router = APIRouter(prefix="/users", tags=["users"])
+router = APIRouter(prefix="/api/users", tags=["users"])
 
 @router.post("", response_model=User, status_code=status.HTTP_201_CREATED)
 async def create_user(

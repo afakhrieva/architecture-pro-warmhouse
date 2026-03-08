@@ -9,9 +9,11 @@ import (
 )
 
 var services = map[string]string{
-	"/users":          "http://user-service:8001",
-	"/devices":        "http://device-service:8002",
-	"/telemetry":      "http://telemetry-service:8003",
+	"/api/users":      "http://user-service:8001",
+	"/api/homes":      "http://user-service:8001",
+	"/api/locations":  "http://user-service:8001",
+	"/api/devices":    "http://device-service:8002",
+	"/api/telemetry":  "http://telemetry-service:8003",
 	"/api/v1/sensors": "http://smart-home:8003", // запросы в монолит
 	"/temperature":    "http://smart-home:8003", // запросы в монолит
 }

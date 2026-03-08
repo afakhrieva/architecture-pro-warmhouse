@@ -1,4 +1,3 @@
-# app/kafka_consumer.py
 import aiokafka
 import json
 import asyncio
@@ -32,7 +31,7 @@ class TelemetryConsumer:
 
         await self.consumer.start()
         self.running = True
-        logger.info(f"✅ Kafka consumer started, listening to {settings.kafka_topic}")
+        logger.info(f"Kafka consumer started, listening to {settings.kafka_topic}")
 
         # Запускаем бесконечный цикл обработки
         asyncio.create_task(self._consume_loop())
@@ -42,7 +41,7 @@ class TelemetryConsumer:
         self.running = False
         if self.consumer:
             await self.consumer.stop()
-            logger.info("🔌 Kafka consumer stopped")
+            logger.info("Kafka consumer stopped")
 
     async def _consume_loop(self):
         """Основной цикл обработки сообщений"""
@@ -54,7 +53,7 @@ class TelemetryConsumer:
                 await self._process_message(msg.value)
 
         except Exception as e:
-            logger.error(f"❌ Error in consume loop: {e}")
+            logger.error(f"Consumer error: {e}")
         finally:
             await self.stop()
 
@@ -84,10 +83,10 @@ class TelemetryConsumer:
             # Сохраняем батчем
             if points:
                 await self.store.save_batch(points)
-                logger.debug(f"📊 Processed {len(points)} metrics from {device_id}")
+                logger.debug(f"Processed {len(points)} metrics from {device_id}")
 
         except Exception as e:
-            logger.error(f"❌ Failed to process message: {e}")
+            logger.error(f"Failed to process message: {e}")
 
     def _extract_metrics(self, device_id: str, prefix: str,
                          obj: any, timestamp: float,

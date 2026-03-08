@@ -18,14 +18,14 @@ data class CreateDeviceRequest(
     @field:NotNull
     val homeId: Long,
 
-    val roomId: Long? = null,
+    val locationId: Long? = null,
 
     val capabilities: List<DeviceCapability> = emptyList()
 )
 
 data class UpdateDeviceRequest(
     val name: String? = null,
-    val roomId: Long? = null
+    val locationId: Long? = null
 )
 
 data class DeviceResponse(
@@ -33,7 +33,7 @@ data class DeviceResponse(
     val name: String,
     val type: DeviceType,
     val homeId: Long,
-    val roomId: Long?,
+    val locationId: Long?,
     val userId: String,
     val status: DeviceStatus,
     val capabilities: List<DeviceCapability>,

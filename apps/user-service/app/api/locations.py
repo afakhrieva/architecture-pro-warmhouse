@@ -7,7 +7,7 @@ from app.services.location_service import LocationService
 from app.services.home_service import HomeService
 from app.db.memory_db import MemoryDB
 
-router = APIRouter(prefix="/locations", tags=["locations"])
+router = APIRouter(prefix="/api/locations", tags=["locations"])
 
 @router.post("", response_model=Location, status_code=status.HTTP_201_CREATED)
 async def create_location(
